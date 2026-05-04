@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <title>Cryptography Toolkit</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f7f6; padding: 40px; color: #333; }
+        .container { max-width: 900px; margin: auto; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        h1 { text-align: center; color: #2c3e50; border-bottom: 2px solid #3498db; padding-bottom: 10px; }
+        section { margin-top: 30px; padding: 20px; border: 1px solid #eee; border-radius: 8px; }
+        h3 { margin-top: 0; color: #3498db; }
+        textarea, input { width: 100%; padding: 10px; margin: 10px 0; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box; }
+        button { background-color: #3498db; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; margin-right: 5px; }
+        button:hover { background-color: #2980b9; }
+        .result-box { background: #e8f4fd; padding: 15px; border-radius: 4px; word-break: break-all; min-height: 20px; margin-top: 10px; border-left: 5px solid #3498db; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔐 Cryptography Toolkit</h1>
+
+        <section>
+            <h3>1. Hàm băm (Hashing)</h3>
+            <input type="text" id="hashInput" placeholder="Nhập chuỗi cần băm...">
+            <button onclick="doHash('MD5')">MD5</button>
+            <button onclick="doHash('SHA256')">SHA256</button>
+            <div class="result-box" id="hashRes">Kết quả sẽ hiển thị ở đây...</div>
+        </section>
+
+        <section>
+            <h3>2. Mã hóa đối xứng (Symmetric)</h3>
+            <textarea id="symInput" placeholder="Nhập văn bản gốc hoặc bản mã..."></textarea>
+            <input type="text" id="symKey" placeholder="Nhập Key (AES: 16 ký tự, DES: 8 ký tự)">
+            <button onclick="doSym('AES', 'encrypt')">AES Encrypt</button>
+            <button onclick="doSym('AES', 'decrypt')">AES Decrypt</button>
+            <button onclick="doSym('3DES', 'encrypt')">3DES Encrypt</button>
+            <button onclick="doSym('3DES', 'decrypt')">3DES Decrypt</button>
+            <div class="result-box" id="symRes">Kết quả...</div>
+        </section>
+
+        <section>
+            <h3>3. Mã hóa bất đối xứng (RSA)</h3>
+            <button onclick="genRSA()">Tạo cặp khóa (Generate Keys)</button>
+            <textarea id="pubK" placeholder="Public Key sẽ hiện ở đây..." rows="4"></textarea>
+            <textarea id="privK" placeholder="Private Key sẽ hiện ở đây..." rows="4"></textarea>
+            <input type="text" id="asymInput" placeholder="Nhập văn bản...">
+            <button onclick="doAsym('encrypt')">RSA Encrypt</button>
+            <button onclick="doAsym('decrypt')">RSA Decrypt</button>
+            <div class="result-box" id="asymRes">Kết quả...</div>
+        </section>
+    </div>
+
+    <script>
+        async function api(url, data) {
+            const res = await fetch(url, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(data)
+            });
+            return await res.json();
+        }
+
+        async function doHash(algo) {
+            const val = document.getElementById('hashInput').value;
+            const d = await api('/api/hash', {algo, input: val});
+            document.getElementById('hashRes').innerText = d.result || d.error;
+        }
+
+        async function doSym(algo, action) {
+            const d = await api('/api/symmetric', {
+                algo, action, 
+                input: document.getElementById('symInput').value,
+                key: document.getElementById('symKey').value
+            });
+            document.getElementById('symRes').innerText = d.result || d.error;
+        }
+
+        async function genRSA() {
+            const d = await api('/api/asymmetric/genkeys', {});
+            document.getElementById('pubK').value = d.pub_key;
+            document.getElementById('privK').value = d.priv_key;
+        }
+
+        async function doAsym(action) {
+            const d = await api('/api/asymmetric/process', {
+                action, input: document.getElementById('asymInput').value,
+                pub_key: document.getElementById('pubK').value,
+                priv_key: document.getElementById('privK').value
+            });
+            document.getElementById('asymRes').innerText = d.result || d.error;
+        }
+    </script>
+</body>
+</html>
